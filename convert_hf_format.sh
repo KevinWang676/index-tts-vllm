@@ -1,4 +1,4 @@
-MODEL_DIR="/path/to/IndexTeam/Index-TTS"
+MODEL_DIR="IndexTTS-1.5"
 VLLM_DIR="$MODEL_DIR/vllm"
 
 mkdir -p "$VLLM_DIR"
