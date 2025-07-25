@@ -5,6 +5,7 @@ import os
 import asyncio
 import io
 import traceback
+import torch  # Added torch import for CUDA cache management
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from contextlib import asynccontextmanager
@@ -99,6 +100,10 @@ async def tts_api_url(request: Request):
         global tts
         sr, wav = await tts.infer(audio_paths, text, seed=seed)
         
+        # Clear CUDA cache after inference
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            
         with io.BytesIO() as wav_buffer:
             sf.write(wav_buffer, wav, sr, format='WAV')
             wav_bytes = wav_buffer.getvalue()
@@ -128,7 +133,11 @@ async def tts_api(request: Request):
 
         global tts
         sr, wav = await tts.infer_with_ref_audio_embed(character, text)
-        
+
+        # Clear CUDA cache after inference
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            
         with io.BytesIO() as wav_buffer:
             sf.write(wav_buffer, wav, sr, format='WAV')
             wav_bytes = wav_buffer.getvalue()
@@ -151,7 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int, default=11996)
     parser.add_argument("--model_dir", type=str, default="/path/to/IndexTeam/Index-TTS")
-    parser.add_argument("--gpu_memory_utilization", type=float, default=0.25)
+    parser.add_argument("--gpu_memory_utilization", type=float, default=0.08)
     args = parser.parse_args()
 
     uvicorn.run(app=app, host=args.host, port=args.port)
